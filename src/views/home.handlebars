@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lista de Productos</title>
+</head>
+<body>
+    <h1>Lista de Productos</h1>
+
+    {{!-- Muestra los productos --}}
+    {{#each products}}
+        <div>
+            <h2>{{this.title}}</h2>
+            <p>Descripción: {{this.description}}</p>
+            <p>Precio: {{this.price}}</p>
+            <p><a href="/products/{{this._id}}/details">Ver detalles</a></p>
+        </div>
+    {{/each}}
+
+    {{!-- Muestra los enlaces de paginación si hay más de una página --}}
+    {{#if totalPages}}
+        <div>
+            {{#if hasPrevPage}}
+                <a href="{{prevLink}}">Página Anterior</a>
+            {{/if}}
+
+            Página {{page}} de {{totalPages}}
+
+            {{#if hasNextPage}}
+                <a href="{{nextLink}}">Página Siguiente</a>
+            {{/if}}
+        </div>
+    {{/if}}
+</body>
+</html>

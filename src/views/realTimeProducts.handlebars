@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Real Time Products</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+</head>
+
+<body>
+    <h1>Lista de Productos en Tiempo Real</h1>
+    <ul id="real-time-list">
+        {{#each products}}
+        <li>{{this.title}} - {{this.description}}</li>
+        {{/each}}
+    </ul>
+
+    <script>
+        const socket = io();
+
+        socket.on('updateProducts', (products) => {
+            console.log('Update products:', products);
+            updateProductList(products);
+        });
+
+        socket.on('productCreated', (data) => {
+            if (data && data.product !== undefined) {
+                console.log('Nuevo producto:', data.product);
+                appendProductToList(data.product);
+            } else {
+                console.error('Error: data o data.product es undefined.');
+            }
+        });
+
+        socket.on('productDeleted', (data) => {
+            if (data && data.productId !== undefined) {
+                console.log('Producto eliminado:', data.productId);
+                removeProductFromList(data.productId);
+            } else {
+                console.error('Error: data o data.productId es undefined.');
+            }
+        });
+
+        socket.on('products', (data) => {
+            console.log('Productos recibidos:', data);
+            updateProductList(data);
+        });
+
+        function updateProductList(products) {
+            const list = document.getElementById('real-time-list');
+            list.innerHTML = '';
+
+            products.forEach(product => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${product.title} - ${product.description}`;
+                list.appendChild(listItem);
+            });
+        }
+
+        function appendProductToList(product) {
+            const list = document.getElementById('real-time-list');
+            const listItem = document.createElement('li');
+            listItem.textContent = `${product.title} - ${product.description}`;
+            list.appendChild(listItem);
+        }
+
+        function removeProductFromList(productId) {
+            const list = document.getElementById('real-time-list');
+            const deletedProduct = list.querySelector(`li[data-id="${productId}"]`);
+            if (deletedProduct) {
+                list.removeChild(deletedProduct);
+            }
+        }
+    </script>
+</body>
+
+</html>
