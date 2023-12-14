@@ -18,7 +18,7 @@ module.exports = function (io) {
     router.get('/:cid', async (req, res) => {
         const cid = req.params.cid;
         try {
-            const cart = await CartDao.getCartById(cid);
+            const cart = await CartDao.getCartById(cid).populate('products.product');
             if (cart) {
                 res.render('cart', { cart });
             } else {

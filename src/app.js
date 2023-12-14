@@ -10,6 +10,7 @@ const ChatRouter = require('./routers/ChatRouter');
 const ProductDao = require('./dao/productDao');
 const MessageDao = require('./dao/messageDao');
 const CartDao = require('./dao/cartDao');
+const Cart = require('./dao/models/cartModel');
 
 const app = express();
 const server = http.createServer(app);
@@ -23,17 +24,7 @@ mongoose.connect('mongodb+srv://I_Ulloa:Coderclave@ecommerce.6tv4mer.mongodb.net
 });
 
 const viewsPath = path.join(__dirname, 'views');
-app.engine('.handlebars', engine({
-    extname: '.handlebars',
-    helpers: {
-        lookup: function (arr, value) {
-            for (var i = 0, len = arr.length; i < len; i++) {
-                if (arr[i].id === value) return arr[i];
-            }
-            return null;
-        }
-    }
-}));
+app.engine('.handlebars', engine({ extname: '.handlebars', allowProtoMethodsByDefault: true }));
 app.set('view engine', '.handlebars');
 app.set('views', viewsPath);
 
@@ -60,7 +51,7 @@ app.get('/views/carts/:cid', async (req, res) => {
     const cid = req.params.cid;
     try {
         const cart = await CartDao.getCartById(cid);
-        const products = await ProductDao.getProducts();
+        const products = await ProductDao.getProducts();  
         if (cart) {
             res.render('cart', { cart, products }); 
         } else {
@@ -88,34 +79,36 @@ app.get('/views/products', async (req, res) => {
 });
 
 
+
 io.on('connection', async (socket) => {
     console.log('Cliente conectado');
 
     const products = await ProductDao.getProducts();
     socket.emit('products', products);
 
-    socket.on('addToCart', async ({ productId, productName }) => {
+    socket.on('addToCart', async ({ productId, productName, productPrice }) => {
         try {
             const userId = socket.id; 
-
-            let cart = await CartDao.findOne({ userId });
-
+    
+            let cart = await Cart.findOne({ userId });
+    
             if (!cart) {
-                cart = new CartDao({ userId, products: [] });
+                cart = new Cart({ userId, products: [] });
             }
-
+    
             const existingProduct = cart.products.find(product => product.productId === productId);
-
+    
             if (existingProduct) {
                 existingProduct.quantity += 1;
             } else {
-                cart.products.push({ productId, quantity: 1 });
+                // Asegúrate de incluir el precio del producto al agregarlo al carrito
+                cart.products.push({ productId, quantity: 1, price: productPrice });
             }
-
+    
             await cart.save();
-
+    
             console.log(`Producto "${productName}" agregado al carrito del usuario ${userId}`);
-
+    
         } catch (error) {
             console.error('Error al agregar el producto al carrito:', error);
         }
