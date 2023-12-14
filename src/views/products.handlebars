@@ -1,0 +1,14 @@
+<h1>Lista de Productos</h1>
+<ul>
+    {{#each products}}
+        <li>
+            {{this.title}} - {{this.description}} 
+            <button onclick="addToCart('{{this._id}}', '{{this.title}}')">Agregar al carrito</button>
+        </li>
+    {{/each}}
+</ul>
+<script>
+    function addToCart(productId, productName) {
+        socket.emit('addToCart', { productId, productName });
+    }
+</script>

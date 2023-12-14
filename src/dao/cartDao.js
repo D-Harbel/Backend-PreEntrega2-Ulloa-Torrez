@@ -1,11 +1,11 @@
 const { Cart } = require('./index');
 
 class CartDao {
-    async getCartById(id) {
+    async getCarts() {
         try {
-            return await Cart.findById(id).populate('products.product', 'title price');
+            return await Cart.find.callerlean();
         } catch (error) {
-            console.error(`Error al obtener el carrito con ID ${id}:`, error);
+            console.error('Error al obtener carritos:', error);
             throw error;
         }
     }
@@ -48,25 +48,9 @@ class CartDao {
 
     async getCartById(id) {
         try {
-            return await Cart.findById(id);
+            return await Cart.findById(id).lean();
         } catch (error) {
             console.error(`Error al obtener el carrito con ID ${id}:`, error);
-            throw error;
-        }
-    }
-
-    async deleteAllProducts(cartId) {
-        try {
-            const cart = await Cart.findById(cartId);
-
-            if (!cart) {
-                throw new Error(`No se encontró el carrito con el ID ${cartId}`);
-            }
-
-            cart.products = [];
-            await cart.save();
-        } catch (error) {
-            console.error(`Error al eliminar todos los productos del carrito con ID ${cartId}:`, error);
             throw error;
         }
     }

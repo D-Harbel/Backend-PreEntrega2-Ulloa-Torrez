@@ -9,6 +9,7 @@ const CartRouter = require('./routers/CartRouter');
 const ChatRouter = require('./routers/ChatRouter');
 const ProductDao = require('./dao/productDao');
 const MessageDao = require('./dao/messageDao');
+const CartDao = require('./dao/cartDao');
 
 const app = express();
 const server = http.createServer(app);
@@ -22,7 +23,17 @@ mongoose.connect('mongodb+srv://I_Ulloa:Coderclave@ecommerce.6tv4mer.mongodb.net
 });
 
 const viewsPath = path.join(__dirname, 'views');
-app.engine('.handlebars', engine({ extname: '.handlebars', allowProtoMethodsByDefault: true }));
+app.engine('.handlebars', engine({
+    extname: '.handlebars',
+    helpers: {
+        lookup: function (arr, value) {
+            for (var i = 0, len = arr.length; i < len; i++) {
+                if (arr[i].id === value) return arr[i];
+            }
+            return null;
+        }
+    }
+}));
 app.set('view engine', '.handlebars');
 app.set('views', viewsPath);
 
@@ -32,11 +43,9 @@ app.use(express.static('public'));
 
 app.get('/', async (req, res) => {
     try {
-        const { limit, page, sort, query, category, availability } = req.query;
-        const response = await ProductDao.getProducts({ limit, page, sort, query, category, availability });
-        const { payload: products, totalPages, prevPage, nextPage, hasPrevPage, hasNextPage, prevLink, nextLink } = response;
+        const products = await ProductDao.getProducts();
         console.log(products);
-        res.render('home', { products, totalPages, prevPage, nextPage, page, hasPrevPage, hasNextPage, prevLink, nextLink });
+        res.render('home', { products });
     } catch (error) {
         console.error('Error al obtener productos:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
@@ -45,25 +54,35 @@ app.get('/', async (req, res) => {
 
 app.use('/api/products', ProductRouter(io));
 app.use('/api/carts', CartRouter(io));
-app.use('/chat', ChatRouter(io, MessageDao));
+app.use('/chat', ChatRouter(io, MessageDao)); 
+
+app.get('/views/carts/:cid', async (req, res) => {
+    const cid = req.params.cid;
+    try {
+        const cart = await CartDao.getCartById(cid);
+        const products = await ProductDao.getProducts();
+        if (cart) {
+            res.render('cart', { cart, products }); 
+        } else {
+            res.status(404).json({ error: 'Carrito no encontrado' });
+        }
+    } catch (error) {
+        console.error(`Error al obtener el carrito con ID ${cid}:`, error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 
 
 app.get('/realtimeproducts', (req, res) => {
     res.render('realTimeProducts');
 });
 
-app.get('/products/:id/details', async (req, res) => {
-    const productId = req.params.id;
-
+app.get('/views/products', async (req, res) => {
     try {
-        const product = await ProductDao.getProductById(productId);
-        if (product) {
-            res.render('productDetails', { product });
-        } else {
-            res.status(404).json({ error: 'Producto no encontrado' });
-        }
+        const products = await ProductDao.getProducts();
+        res.render('products', { products });
     } catch (error) {
-        console.error(`Error al obtener los detalles del producto con ID ${productId}:`, error);
+        console.error('Error al obtener productos para la vista:', error);
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
@@ -74,6 +93,33 @@ io.on('connection', async (socket) => {
 
     const products = await ProductDao.getProducts();
     socket.emit('products', products);
+
+    socket.on('addToCart', async ({ productId, productName }) => {
+        try {
+            const userId = socket.id; 
+
+            let cart = await CartDao.findOne({ userId });
+
+            if (!cart) {
+                cart = new CartDao({ userId, products: [] });
+            }
+
+            const existingProduct = cart.products.find(product => product.productId === productId);
+
+            if (existingProduct) {
+                existingProduct.quantity += 1;
+            } else {
+                cart.products.push({ productId, quantity: 1 });
+            }
+
+            await cart.save();
+
+            console.log(`Producto "${productName}" agregado al carrito del usuario ${userId}`);
+
+        } catch (error) {
+            console.error('Error al agregar el producto al carrito:', error);
+        }
+    });
 });
 
 server.listen(port, () => {

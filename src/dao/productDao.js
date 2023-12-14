@@ -1,52 +1,9 @@
 const { Product } = require('./index');
 
 class ProductDao {
-    async getProducts({ limit = 10, page = 1, sort, query, category, availability }) {
+    async getProducts() {
         try {
-            let filter = {};
-
-            if (category) {
-                filter.category = category;
-            }
-
-            if (availability !== undefined) {
-                filter.status = availability;
-            }
-
-            let sortField = 'price';
-
-            if (sort) {
-                sortField = sort === 'asc' ? 'price' : '-price';
-            }
-
-            const totalCount = await Product.countDocuments(filter);
-            const totalPages = Math.ceil(totalCount / limit);
-            const hasPrevPage = page > 1;
-            const hasNextPage = page < totalPages;
-            const prevPage = hasPrevPage ? page - 1 : null;
-            const nextPage = hasNextPage ? page + 1 : null;
-            const prevLink = hasPrevPage ? `/api/products?limit=${limit}&page=${prevPage}&sort=${sort}&query=${query}` : null;
-            const nextLink = hasNextPage ? `/api/products?limit=${limit}&page=${nextPage}&sort=${sort}&query=${query}` : null;
-
-            const products = await Product.find(filter)
-                .sort(sortField)
-                .skip((page - 1) * limit)
-                .limit(limit)
-                .lean();
-                
-
-            return {
-                status: 'success',
-                payload: products,
-                totalPages,
-                prevPage,
-                nextPage,
-                page,
-                hasPrevPage,
-                hasNextPage,
-                prevLink,
-                nextLink,
-            };
+            return await Product.find().lean();
         } catch (error) {
             console.error('Error al obtener productos:', error);
             throw error;
@@ -108,17 +65,17 @@ class ProductDao {
     async deleteProduct(id) {
         try {
             const existingProduct = await Product.findById(id);
-
+    
             if (!existingProduct) {
                 throw new Error(`No se encontró el producto con el ID ${id}`);
             }
-
+    
             const result = await Product.findByIdAndDelete(id);
-
+    
             if (!result) {
                 throw new Error(`No se encontró el producto con el ID ${id}`);
             }
-
+    
             console.log('Producto eliminado');
             return result;
         } catch (error) {
