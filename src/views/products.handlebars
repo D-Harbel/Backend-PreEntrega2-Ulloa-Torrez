@@ -1,17 +1,23 @@
-
-
 <h1>Lista de Productos</h1>
 <ul>
-    {{#each products}}
+    {{#each products.payload}}
         <li>
             {{this.title}} - {{this.description}} 
-            <button onclick="addToCart('{{this._id}}', '{{this.title}}', '{{this.price}}')">Agregar al carrito</button>
+            <button onclick="addToCart('{{this._id}}', '{{this.title}}')">Agregar al carrito</button>
         </li>
     {{/each}}
 </ul>
 
+{{#if products.hasPrevPage}}
+    <a href="?page={{products.prevPage}}&limit={{products.limit}}">Página Anterior</a>
+{{/if}}
+
+{{#if products.hasNextPage}}
+    <a href="?page={{products.nextPage}}&limit={{products.limit}}">Página Siguiente</a>
+{{/if}}
+
 <script>
-    function addToCart(productId, productName, productPrice) {
-        socket.emit('addToCart', { productId, productName, productPrice });
+    function addToCart(productId, productName) {
+        socket.emit('addToCart', { productId, productName });
     }
 </script>

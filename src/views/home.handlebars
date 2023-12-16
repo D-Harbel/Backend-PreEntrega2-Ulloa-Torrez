@@ -11,7 +11,7 @@
 <body>
     <h1>Lista de Productos</h1>
     <ul>
-        {{#each products}}
+        {{#each products.payload}}
             <li>{{this.title}} - {{this.description}}</li>
         {{/each}}
     </ul>

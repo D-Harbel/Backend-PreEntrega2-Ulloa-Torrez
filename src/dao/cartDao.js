@@ -48,7 +48,7 @@ class CartDao {
 
     async getCartById(id) {
         try {
-            return await Cart.findById(id).populate('products.product').lean();
+            return await Cart.findById(id).populate('products.product','title').lean();
         } catch (error) {
             console.error(`Error al obtener el carrito con ID ${id}:`, error);
             throw error;
