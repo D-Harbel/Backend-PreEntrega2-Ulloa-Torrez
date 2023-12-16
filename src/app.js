@@ -10,8 +10,6 @@ const ChatRouter = require('./routers/ChatRouter');
 const ProductDao = require('./dao/productDao');
 const MessageDao = require('./dao/messageDao');
 const CartDao = require('./dao/cartDao');
-const mongoosePaginate = require('mongoose-paginate-v2');
-const Product = require('./dao/models/productModel');
 
 const app = express();
 const server = http.createServer(app);
@@ -32,10 +30,9 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(express.static('public'));
 
-// Rutas
 app.get('/', async (req, res) => {
     try {
-        const products = await ProductDao.getProducts({ limit: 10, page: 1, sort: 'asc', query: 'available' });
+        const products = await ProductDao.getProducts({ limit: 10, page: 1, sort: req.query.sort, query: 'available' });
         console.log(products);
         res.render('home', { products });
     } catch (error) {
@@ -43,7 +40,8 @@ app.get('/', async (req, res) => {
         res.status(500).json({ error: 'Error interno del servidor' });
     }
 });
-app.use('/api/products', ProductRouter);
+
+app.use('/api/products', ProductRouter(io));
 app.use('/api/carts', CartRouter(io));
 app.use('/chat', ChatRouter(io, MessageDao));
 
@@ -68,7 +66,7 @@ app.get('/realtimeproducts', (req, res) => {
 
 app.get('/views/products', async (req, res) => {
     try {
-        const products = await ProductDao.getProducts({ limit:req.query.limit, page:req.query.page, query: 'available' });
+        const products = await ProductDao.getProducts({ limit: req.query.limit, page: req.query.page, sort: req.query.sort, query: req.query.query });
         res.render('products', { products });
     } catch (error) {
         console.error('Error al obtener productos para la vista:', error);

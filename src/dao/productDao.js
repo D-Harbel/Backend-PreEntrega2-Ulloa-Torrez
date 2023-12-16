@@ -4,6 +4,7 @@ class ProductDao {
     async getProducts({ limit, page, sort, query }) {
         try {
             const filter = {};
+    
             if (query) {
                 filter.$or = [
                     { category: query },
@@ -12,12 +13,13 @@ class ProductDao {
             }
     
             const options = {
-                page: parseInt(page)||1,
-                limit: parseInt(limit)||10,
-                //sort: sort ? { price: sort === 'asc' ? 1 : -1 } : undefined,
+                page: parseInt(page) || 1,
+                limit: parseInt(limit) || 10,
+                sort: sort ? { price: sort === 'asc' ? 1 : -1 } : undefined,
             };
     
             const result = await Product.paginate(filter, options);
+    
     
             const plainDocs = result.docs.map(doc => {
                 const plainDoc = {};
@@ -42,8 +44,8 @@ class ProductDao {
                 page: result.page,
                 hasPrevPage,
                 hasNextPage,
-                prevLink: hasPrevPage ? `/api/products?limit=${limit}&page=${prevPage}` : null,
-                nextLink: hasNextPage ? `/api/products?limit=${limit}&page=${nextPage}` : null,
+                prevLink: hasPrevPage ? `/products?limit=${limit}&page=${prevPage}` : null,
+                nextLink: hasNextPage ? `/products?limit=${limit}&page=${nextPage}` : null,
                 limit
             };
     

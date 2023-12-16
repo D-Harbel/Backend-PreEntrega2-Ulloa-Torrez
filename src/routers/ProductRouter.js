@@ -2,7 +2,6 @@ const express = require('express');
 const router = express.Router();
 
 const ProductDao = require('../dao/productDao');
-const { Product } = require('../dao/index');
 
 module.exports = function (io) {
     router.get('/', async (req, res) => {
@@ -12,7 +11,7 @@ module.exports = function (io) {
             const options = {
                 page: parseInt(page),
                 limit: parseInt(limit),
-                //sort: sort ? { price: sort === 'asc' ? 1 : -1 } : undefined,
+                sort: sort ? { price: sort === 'asc' ? 1 : -1 } : undefined,
             };
 
             const filter = query ? {} : {};
@@ -24,8 +23,8 @@ module.exports = function (io) {
             const nextPage = products.nextPage;
             const hasPrevPage = products.hasPrevPage;
             const hasNextPage = products.hasNextPage;
-            const prevLink = hasPrevPage ? `/views/products?limit=${limit}&page=${prevPage}` : null;
-            const nextLink = hasNextPage ? `/views/products?limit=${limit}&page=${nextPage}` : null;
+            const prevLink = hasPrevPage ? `/products?limit=${limit}&page=${prevPage}` : null;
+            const nextLink = hasNextPage ? `/products?limit=${limit}&page=${nextPage}` : null;
 
             res.json({
                 status: 'success',
