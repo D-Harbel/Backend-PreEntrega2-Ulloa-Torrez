@@ -1,23 +1,60 @@
+<!-- Mueve esta línea al principio del head -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+
+<!-- Luego, en el body -->
 <h1>Lista de Productos</h1>
 <ul>
     {{#each products.payload}}
-        <li>
-            {{this.title}} - {{this.description}} 
-            <button onclick="addToCart('{{this._id}}', '{{this.title}}')">Agregar al carrito</button>
-        </li>
+    <li>
+        {{this.title}} - {{this.description}}
+        <button class="addToCartBtn" onclick="addToCart('{{this._id}}', '{{this.title}}')" disabled>Agregar al carrito</button>
+    </li>
     {{/each}}
 </ul>
 
 {{#if products.hasPrevPage}}
-    <a href="?page={{products.prevPage}}&limit={{products.limit}}">Página Anterior</a>
+<a href="?page={{products.prevPage}}&limit={{products.limit}}">Página Anterior</a>
 {{/if}}
 
 {{#if products.hasNextPage}}
-    <a href="?page={{products.nextPage}}&limit={{products.limit}}">Página Siguiente</a>
+<a href="?page={{products.nextPage}}&limit={{products.limit}}">Página Siguiente</a>
 {{/if}}
 
+<!-- Al final del body -->
 <script>
+    const socket = io();
+
+    socket.on('connect', () => {
+        console.log('Conectado al servidor');
+        enableButtons();
+    });
+
+    socket.on('disconnect', () => {
+        console.log('Desconectado del servidor');
+        disableButtons();
+    });
+
+    function enableButtons() {
+        const buttons = document.getElementsByClassName('addToCartBtn');
+        for (const button of buttons) {
+            button.removeAttribute('disabled');
+        }
+    }
+
+    function disableButtons() {
+        const buttons = document.getElementsByClassName('addToCartBtn');
+        for (const button of buttons) {
+            button.setAttribute('disabled', 'true');
+        }
+    }
+
     function addToCart(productId, productName) {
-        socket.emit('addToCart', { productId, productName });
+        console.log(socket);
+
+        if (typeof socket !== 'undefined' && socket.connected) {
+            socket.emit('addToCart', { productId, productName });
+        } else {
+            console.error('Socket no definido o no conectado');
+        }
     }
 </script>

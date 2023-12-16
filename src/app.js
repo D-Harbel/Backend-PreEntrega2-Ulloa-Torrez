@@ -84,25 +84,13 @@ io.on('connection', async (socket) => {
 
     socket.on('addToCart', async ({ productId, productName }) => {
         try {
-            const userId = socket.id;
 
-            let cart = await CartDao.findOne({ userId });
+            const cartId = "65711d223f01f9b553bbfdb6";
+            const quantity = 1;
 
-            if (!cart) {
-                cart = new CartDao({ userId, products: [] });
-            }
+            await CartDao.addProductToCart(cartId, productId, quantity);
 
-            const existingProduct = cart.products.find(product => product.productId === productId);
-
-            if (existingProduct) {
-                existingProduct.quantity += 1;
-            } else {
-                cart.products.push({ productId, quantity: 1 });
-            }
-
-            await cart.save();
-
-            console.log(`Producto "${productName}" agregado al carrito del usuario ${userId}`);
+            console.log(`Producto "${productName}" agregado al carrito`);
 
         } catch (error) {
             console.error('Error al agregar el producto al carrito:', error);
