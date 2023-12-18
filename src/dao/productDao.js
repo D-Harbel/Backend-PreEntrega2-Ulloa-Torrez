@@ -1,5 +1,6 @@
 const { Product } = require('./index');
 
+
 class ProductDao {
     async getProducts({ limit, page, sort, query }) {
         try {
@@ -8,7 +9,16 @@ class ProductDao {
             if (query) {
                 filter.$or = [
                     { category: query },
+                    { title: { $regex: query, $options: 'i' } },
+                    { description: { $regex: query, $options: 'i' } },
+                    { code: { $regex: query, $options: 'i' } },
                     { status: query === 'available' ? true : false },
+                    {
+                        $or: [
+                            { price: isNaN(query) ? null : parseFloat(query) },
+                            { stock: isNaN(query) ? null : parseInt(query) },
+                        ]
+                    }
                 ];
             }
     

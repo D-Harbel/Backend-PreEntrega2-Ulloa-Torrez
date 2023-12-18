@@ -32,7 +32,7 @@ app.use(express.static('public'));
 
 app.get('/', async (req, res) => {
     try {
-        const products = await ProductDao.getProducts({ limit: 10, page: 1, sort: req.query.sort, query: 'available' });
+        const products = await ProductDao.getProducts({ limit: 30, page: 1, sort: req.query.sort, query: 'available' });
         console.log(products);
         res.render('home', { products });
     } catch (error) {
@@ -41,7 +41,15 @@ app.get('/', async (req, res) => {
     }
 });
 
-app.use('/api/products', ProductRouter(io));
+app.get('/api/products', async (req, res) => {
+    try {
+        const products = await ProductDao.getProducts(req.query);
+        res.json(products);
+    } catch (error) {
+        console.error('Error al obtener productos:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
+});
 app.use('/api/carts', CartRouter(io));
 app.use('/chat', ChatRouter(io, MessageDao));
 

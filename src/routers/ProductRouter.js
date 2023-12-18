@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 
 const ProductDao = require('../dao/productDao');
+const { Product } = require('../dao/index');
 
 module.exports = function (io) {
     router.get('/', async (req, res) => {
@@ -16,7 +17,7 @@ module.exports = function (io) {
 
             const filter = query ? {} : {};
 
-            const products = await ProductDao.paginate(filter, options);
+            const products = await Product.paginate(filter, options);
 
             const totalPages = products.totalPages;
             const prevPage = products.prevPage;

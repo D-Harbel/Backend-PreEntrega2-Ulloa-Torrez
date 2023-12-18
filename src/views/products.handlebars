@@ -1,13 +1,12 @@
-<!-- Mueve esta línea al principio del head -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
 
-<!-- Luego, en el body -->
 <h1>Lista de Productos</h1>
 <ul>
     {{#each products.payload}}
     <li>
-        {{this.title}} - {{this.description}}
-        <button class="addToCartBtn" onclick="addToCart('{{this._id}}', '{{this.title}}')" disabled>Agregar al carrito</button>
+        nombre: {{this.title}} - categoria: {{this.category}} - precio:{{this.price}}
+        <button class="addToCartBtn" onclick="addToCart('{{this._id}}', '{{this.title}}')" disabled>Agregar al
+            carrito</button> <hr> <br>
     </li>
     {{/each}}
 </ul>
@@ -20,7 +19,6 @@
 <a href="?page={{products.nextPage}}&limit={{products.limit}}">Página Siguiente</a>
 {{/if}}
 
-<!-- Al final del body -->
 <script>
     const socket = io();
 
