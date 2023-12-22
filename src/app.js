@@ -16,10 +16,7 @@ const server = http.createServer(app);
 const io = socketIO(server);
 const port = 3000;
 
-mongoose.connect('mongodb+srv://I_Ulloa:Coderclave@ecommerce.6tv4mer.mongodb.net/?retryWrites=true&w=majority', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-});
+mongoose.connect('mongodb+srv://I_Ulloa:Coderclave@ecommerce.6tv4mer.mongodb.net/?retryWrites=true&w=majority', { dbName: "ecommerce" });
 
 const viewsPath = path.join(__dirname, 'views');
 app.engine('handlebars', engine({ extname: '.handlebars' }));
