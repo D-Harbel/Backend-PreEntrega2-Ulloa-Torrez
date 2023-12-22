@@ -41,15 +41,7 @@ app.get('/', async (req, res) => {
     }
 });
 
-app.get('/api/products', async (req, res) => {
-    try {
-        const products = await ProductDao.getProducts(req.query);
-        res.json(products);
-    } catch (error) {
-        console.error('Error al obtener productos:', error);
-        res.status(500).json({ error: 'Error interno del servidor' });
-    }
-});
+app.use('/api/products', ProductRouter(io));
 app.use('/api/carts', CartRouter(io));
 app.use('/chat', ChatRouter(io, MessageDao));
 
@@ -68,8 +60,14 @@ app.get('/views/carts/:cid', async (req, res) => {
     }
 });
 
-app.get('/realtimeproducts', (req, res) => {
-    res.render('realTimeProducts');
+app.get('/realtimeproducts', async (req, res) => {
+    try {
+        const products = await ProductDao.getProducts({ limit: req.query.limit, page: req.query.page, sort: req.query.sort, query: req.query.query });
+        res.render('realtimeproducts', { products });
+    } catch (error) {
+        console.error('Error al obtener productos para la vista:', error);
+        res.status(500).json({ error: 'Error interno del servidor' });
+    }
 });
 
 app.get('/views/products', async (req, res) => {
@@ -85,7 +83,7 @@ app.get('/views/products', async (req, res) => {
 io.on('connection', async (socket) => {
     console.log('Cliente conectado');
 
-    const products = await ProductDao.getProducts({ limit: 10, page: 1, sort: 'asc', query: 'available' });
+    const products = await ProductDao.getProducts({ limit: 50});
     socket.emit('products', products);
 
     socket.on('addToCart', async ({ productId, productName }) => {
@@ -102,6 +100,7 @@ io.on('connection', async (socket) => {
             console.error('Error al agregar el producto al carrito:', error);
         }
     });
+
 });
 
 server.listen(port, () => {

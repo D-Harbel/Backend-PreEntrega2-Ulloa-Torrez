@@ -47,6 +47,47 @@ module.exports = function (io) {
         }
     });
 
+
+    router.post('/', async (req, res) => {
+        const { title, description, code, price, stock, category, thumbnails } = req.body;
+
+        if (typeof title !== 'string' || title.trim() === '') {
+            return res.status(400).json({ error: 'No se permite el campo vacío en title' });
+        }
+
+        if (typeof description !== 'string' || description.trim() === '') {
+            return res.status(400).json({ error: 'No se permite el campo vacío en description' });
+        }
+
+        if (typeof code !== 'string' || code.trim() === '') {
+            return res.status(400).json({ error: 'No se permite el campo vacío en code' });
+        }
+
+        if (typeof price !== 'number' || isNaN(price) || price <= 0) {
+            return res.status(400).json({ error: 'Solo se permiten números positivos en price' });
+        }
+
+        if (typeof stock !== 'number' || isNaN(stock) || stock < 0) {
+            return res.status(400).json({ error: 'Solo se permiten números positivos en stock' });
+        }
+
+        if (typeof category !== 'string' || category.trim() === '') {
+            return res.status(400).json({ error: 'No se permite el campo vacío en category' });
+        }
+
+        try {
+            await ProductDao.addProduct(title, description, code, price, true, stock, category, thumbnails);
+
+            const products = await ProductDao.getProducts();
+            io.emit('updateProducts', products);
+
+            res.status(201).json({ message: 'Producto agregado exitosamente' });
+        } catch (error) {
+            console.error('Error al agregar un producto:', error);
+            res.status(500).json({ error: 'Error interno del servidor' });
+        }
+    });
+
     router.put('/:id', async (req, res) => {
         const productId = req.params.id;
         const updatedProduct = req.body;
@@ -82,14 +123,20 @@ module.exports = function (io) {
 
     router.delete('/:id', async (req, res) => {
         const productId = req.params.id;
-
+    
         const existingProduct = await ProductDao.getProductById(productId);
         if (!existingProduct) {
             return res.status(404).json({ error: 'Producto no encontrado' });
         }
-
+    
         try {
             await ProductDao.deleteProduct(productId);
+    
+            io.emit('productDeleted', { productId });
+    
+            const products = await ProductDao.getProducts();
+            io.emit('updateProducts', products);
+    
             res.status(200).json({ message: 'Producto eliminado exitosamente' });
         } catch (error) {
             console.error(`Error al eliminar el producto con ID ${productId}:`, error);

@@ -53,37 +53,18 @@ module.exports = function (io) {
         }
     });
 
-    router.post('/:cid/product/:pid', async (req, res) => {
-        const cid = req.params.cid;
-        const pid = req.params.pid;
-
-        try {
-            const cart = await CartDao.getCartById(cid);
-
-            if (!cart) {
-                return res.status(404).json({ error: 'Carrito no encontrado' });
-            }
-
-            const existingProductIndex = cart.products.findIndex(product => product.product === pid);
-
-            if (existingProductIndex !== -1) {
-                cart.products[existingProductIndex].quantity += 1;
-            } else {
-                const newProduct = { product: pid, quantity: 1 };
-                cart.products.push(newProduct);
-            }
-
-            await cart.save();
-
-            const products = await ProductDao.getProducts();
-            io.emit('updateProducts', products);
-
-            res.status(201).json({ message: 'Producto agregado al carrito' });
-        } catch (error) {
-            console.error(`Error al agregar un producto al carrito con ID ${cid}:`, error);
-            res.status(500).json({ error: 'Error interno del servidor' });
+    router.post('/:cid/product/:pid', (req, res) => {
+        let cid = req.params.cid
+        let pid = req.params.pid
+        let quantity = parseInt(req.body.quantity)
+    
+        if (isNaN(quantity)) {
+            return res.status(400).json({ error: 'La cantidad debe ser un número entero' })
         }
-    });
+    
+        CartDao.addProductToCart(cid, pid, quantity)
+        res.status(201).json({message: 'Producto agregado al carrito' })
+    })
 
     router.delete('/:cid/products/:pid', async (req, res) => {
         try {

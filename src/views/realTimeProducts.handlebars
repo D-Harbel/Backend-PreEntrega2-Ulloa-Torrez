@@ -12,68 +12,70 @@
 <body>
     <h1>Lista de Productos en Tiempo Real</h1>
     <ul id="real-time-list">
-        {{#each products}}
-        <li>{{this.title}} - {{this.description}}</li>
-        {{/each}}
+            {{#each products.payload}}
+    <li>
+        {{this.title}} - {{this.category}}
+    </li>
+    {{/each}}
     </ul>
 
-    <script>
-        const socket = io();
+<script>
+    const socket = io();
+    const list = document.getElementById('real-time-list');
 
-        socket.on('updateProducts', (products) => {
-            console.log('Update products:', products);
-            updateProductList(products);
-        });
+    function addProductToList(product) {
+        const listItem = document.createElement('li');
+        listItem.textContent = `${product.title} - ${product.description}`;
 
-        socket.on('productCreated', (data) => {
-            if (data && data.product !== undefined) {
-                console.log('Nuevo producto:', data.product);
-                appendProductToList(data.product);
-            } else {
-                console.error('Error: data o data.product es undefined.');
-            }
-        });
+        listItem.setAttribute('data-id', product._id);
 
-        socket.on('productDeleted', (data) => {
-            if (data && data.productId !== undefined) {
-                console.log('Producto eliminado:', data.productId);
-                removeProductFromList(data.productId);
-            } else {
-                console.error('Error: data o data.productId es undefined.');
-            }
-        });
+        list.appendChild(listItem);
+    }
 
-        socket.on('products', (data) => {
-            console.log('Productos recibidos:', data);
-            updateProductList(data);
-        });
+    function removeProductFromList(productId) {
+        const deletedProduct = list.querySelector(`li[data-id="${productId}"]`);
+        if (deletedProduct) {
+            list.removeChild(deletedProduct);
+        }
+    }
 
-        function updateProductList(products) {
-            const list = document.getElementById('real-time-list');
-            list.innerHTML = '';
+    socket.on('updateProducts', (response) => {
+        console.log('Update products:', response);
 
-            products.forEach(product => {
-                const listItem = document.createElement('li');
-                listItem.textContent = `${product.title} - ${product.description}`;
-                list.appendChild(listItem);
+        list.innerHTML = '';
+
+        if (response && response.status === 'success' && Array.isArray(response.payload)) {
+            const products = response.payload;
+
+            products.forEach((product) => {
+                addProductToList(product);
             });
+        } else {
+            console.error('La respuesta no tiene la estructura esperada:', response);
         }
+    });
 
-        function appendProductToList(product) {
-            const list = document.getElementById('real-time-list');
-            const listItem = document.createElement('li');
-            listItem.textContent = `${product.title} - ${product.description}`;
-            list.appendChild(listItem);
-        }
+    socket.on('productCreated', (data) => {
+        if (data && data.product !== undefined) {
+            console.log('Nuevo producto:', data.product);
 
-        function removeProductFromList(productId) {
-            const list = document.getElementById('real-time-list');
-            const deletedProduct = list.querySelector(`li[data-id="${productId}"]`);
-            if (deletedProduct) {
-                list.removeChild(deletedProduct);
-            }
+            addProductToList(data.product);
+        } else {
+            console.error('Error: data o data.product es undefined.');
         }
-    </script>
+    });
+
+    socket.on('productDeleted', (data) => {
+        if (data && data.productId !== undefined) {
+            console.log('Producto eliminado:', data.productId);
+
+            // Eliminar el producto de la lista
+            removeProductFromList(data.productId);
+        } else {
+            console.error('Error: data o data.productId es undefined.');
+        }
+    });
+</script>
 </body>
 
 </html>
